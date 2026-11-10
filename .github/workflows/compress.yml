@@ -12,9 +12,6 @@ on:
         required: false
         default: "22"
         type: string
-  push:
-    paths:
-      - 'input/**'
 
 permissions:
   contents: write
@@ -61,11 +58,3 @@ jobs:
           path: output/*.mp4
           retention-days: 7
 
-      - name: Commit and push compressed output (optional for git pushes)
-        if: github.event_name == 'push'
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add output/
-          git diff --staged --quiet || git commit -m "Auto-compress video via GitHub Actions"
-          git push
