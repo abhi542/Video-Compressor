@@ -1,0 +1,71 @@
+name: Video Compressor
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_url:
+        description: "Video URL (YouTube, Vimeo, Twitter/X, Dropbox, or Direct MP4 link)"
+        required: false
+        type: string
+      crf:
+        description: "Compression quality CRF (20 = high quality, 22 = balanced, 26 = max compression)"
+        required: false
+        default: "22"
+        type: string
+  push:
+    paths:
+      - 'input/**'
+
+permissions:
+  contents: write
+
+jobs:
+  compress:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install FFmpeg & yt-dlp
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          # Install latest yt-dlp standalone binary
+          sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
+          sudo chmod a+rx /usr/local/bin/yt-dlp
+
+      - name: Download video from URL (if provided)
+        if: ${{ inputs.video_url != '' }}
+        run: |
+          mkdir -p input
+          echo "Downloading video from: ${{ inputs.video_url }}"
+          # Use yt-dlp with safe filenames for YouTube, Vimeo, social media, or direct links
+          yt-dlp --no-playlist --restrict-filenames -f "bv*[ext=mp4]+ba*[ext=m4a]/b[ext=mp4]/b" --merge-output-format mp4 -o "input/%(title).50s.%(ext)s" "${{ inputs.video_url }}" || \
+          curl -L -o "input/downloaded_video.mp4" "${{ inputs.video_url }}"
+
+      - name: Run Video Compression
+        run: |
+          mkdir -p output
+          CRF="${{ inputs.crf || '22' }}" python app.py
+
+      - name: Upload Compressed Video as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: compressed-video
+          path: output/*.mp4
+          retention-days: 7
+
+      - name: Commit and push compressed output (optional for git pushes)
+        if: github.event_name == 'push'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add output/
+          git diff --staged --quiet || git commit -m "Auto-compress video via GitHub Actions"
+          git push

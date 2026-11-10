@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Media files (prevent large videos from being committed to Git)
+input/*
+!input/.gitkeep
+output/*
+!output/.gitkeep

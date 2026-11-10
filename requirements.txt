@@ -1,0 +1,9 @@
+# Video Compressor
+#
+# This project is built using Python's standard library and has 0 external pip dependencies!
+#
+# System Requirement:
+# FFmpeg must be installed on your system PATH:
+# - macOS:   brew install ffmpeg
+# - Ubuntu:  sudo apt install -y ffmpeg
+# - Windows: winget install Gyan.FFmpeg
